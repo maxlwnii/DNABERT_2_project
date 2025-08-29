@@ -1,0 +1,20 @@
+name: dnabert2-project
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+  - bioconda
+dependencies:
+  - python=3.10
+  - pytorch>=2.8.0
+  - transformers>=4.49.0
+  - pandas>=2.3.1
+  - numpy>=1.26.4
+  - matplotlib>=3.10.0
+  - scikit-learn>=1.7.1
+  - tqdm>=4.67.1
+  - pip
+  - pip:
+    - logomaker>=0.8
+    - datasets>=3.3.2
+    - evaluate>=0.4.0

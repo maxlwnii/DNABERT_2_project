@@ -426,14 +426,14 @@ def get_user_input():
             sequence = str(df['sequence'].iloc[seq_idx]).upper()
         except Exception as e:
             print(f"Error loading CSV: {e}")
-            sequence = input("Please enter sequence manually (A/T/G/C only): ").strip().upper()
+            sequence = input("Please enter sequence manually (A/T/G/C/U only): ").strip().upper().replace("U", "T")
     else:
-        sequence = input("Enter DNA sequence (A/T/G/C only): ").strip().upper()
+        sequence = input("Enter DNA sequence (A/T/G/C/U only): ").strip().upper().replace("U", "T")
 
     # Validate sequence
-    valid_bases = set('ATGC')
+    valid_bases = set('ATGCU')
     if not sequence or not all(base in valid_bases for base in sequence):
-        raise ValueError("Sequence contains invalid characters. Only A, T, G, C are allowed.")
+        raise ValueError("Sequence contains invalid characters. Only A, T, G, C, U are allowed.")
 
     print("\nOptional parameters (press Enter for defaults):")
     output_dir = input("Output directory [saliency_output]: ").strip() or "saliency_output"

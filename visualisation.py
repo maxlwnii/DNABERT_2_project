@@ -178,7 +178,7 @@ class SaliencyAnalyzer:
         h1.remove(); h2.remove()
 
         grads = saved_grads[-1]  # [1, T, H]
-        token_scores = grads.mean(dim=-1).squeeze(0).cpu().numpy()  # [T]
+        token_scores = grads.norm(dim=-1).squeeze(0).cpu().numpy()  # [T]
 
         # Map token-level scores back to nucleotides via offsets
         filtered_tokens, _, filtered_offsets = self.extract_offset_mapping(sequence)
@@ -283,7 +283,7 @@ class SaliencyAnalyzer:
         # Compute final attributions: (input - baseline) * average_gradients
         avg_grads = integrated_grads / n_steps
         attributions = (orig_embeds - baseline_embeds) * avg_grads
-        token_attr = attributions.mean(dim=-1).squeeze(0).cpu().numpy()  # [T]
+        token_attr = attributions.norm(dim=-1).squeeze(0).cpu().numpy()  # [T]
 
         # Rest of your processing code remains the same
         filtered_tokens, _, filtered_offsets = self.extract_offset_mapping(sequence)

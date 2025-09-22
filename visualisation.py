@@ -64,10 +64,12 @@ class SaliencyAnalyzer:
         with torch.no_grad():
             logits = self.model(**inputs).logits
             probs = torch.softmax(logits, dim=-1)
-        # Binary class : RBP VS NON-RBP.
         return probs[0, 1].item()
+        
 
     def in_silico_mutagenesis(self, sequence):
+        """
+        """
         print("Computing in-silico mutagenesis...")
         seq = sequence.upper()
         L = len(seq)
@@ -86,7 +88,7 @@ class SaliencyAnalyzer:
         print("In-silico mutagenesis completed!")
         return effect
 
-    def sliding_window_mutagenesis(self, sequence, window_size=1, step_size=2):
+    def sliding_window_mutagenesis(self, sequence, window_size=1, step_size=1):
         print(f"Computing sliding window mutagenesis (window size: {window_size}, step size: {step_size})...")
         seq = sequence.upper()
         L = len(seq)
@@ -202,7 +204,7 @@ class SaliencyAnalyzer:
         print(" Gradient saliency completed!")
         return saliency_df, filtered_tokens, token_scores_kept.tolist(), filtered_offsets
 
-    def compute_integrated_gradients_saliency(self, sequence, target_class=None, n_steps=30):
+    def compute_integrated_gradients_saliency(self, sequence, target_class=None, n_steps=120):
         """
         Integrated gradients approximated in embedding space using an embedding-output hook.
         Baseline is zero embeddings; path implemented by interpolating between baseline and input embeddings.
@@ -284,8 +286,7 @@ class SaliencyAnalyzer:
         avg_grads = integrated_grads / n_steps
         attributions = (orig_embeds - baseline_embeds) * avg_grads
         token_attr = attributions.norm(dim=-1).squeeze(0).cpu().numpy()  # [T]
-
-        # Rest of your processing code remains the same
+    
         filtered_tokens, _, filtered_offsets = self.extract_offset_mapping(sequence)
         L = len(sequence)
         saliency_df = pd.DataFrame(0.0, index=range(L), columns=BASES)
@@ -316,7 +317,7 @@ class SaliencyAnalyzer:
                 logo_df.at[pos, base] = float(importance_scores.at[pos, 'Importance'])
         return logo_df
 
-    def analyze_sequence(self, sequence, output_dir="saliency_output", window_size=1, step_size=1, n_steps=30):
+    def analyze_sequence(self, sequence, output_dir="saliency_output", window_size=1, step_size=1, n_steps=120):
         os.makedirs(output_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -377,7 +378,7 @@ class SaliencyAnalyzer:
         plt.show(); plt.close(fig)
 
         results_df = pd.DataFrame({
-            'Position': range(len(seq)),    
+            'Position': range(len(seq)),
             'Nucleotide': list(seq)
         })
 
@@ -406,29 +407,9 @@ def get_user_input():
         model_path = "output/dnabert2/checkpoint-800"
 
     print("\nChoose sequence input method:")
-    print("1. Enter sequence manually")
-    print("2. Load from CSV file")
-    choice = input("Enter choice (1 or 2) [1]: ").strip() or "1"
+    print("Enter sequence manually")
 
-    if choice == "2":
-        csv_path = input("Enter CSV file path [data/test.csv]: ").strip() or "data/test.csv"
-        try:
-            df = pd.read_csv(csv_path)
-            if 'sequence' not in df.columns:
-                raise ValueError("CSV must contain a 'sequence' column.")
-            print(f"CSV loaded with {len(df)} sequences")
-            idx_s = input(f"Enter sequence index (0-{len(df)-1}) or press Enter for random: ").strip()
-            if idx_s:
-                seq_idx = int(idx_s)
-            else:
-                seq_idx = np.random.randint(0, len(df))
-                print(f"Using random sequence at index: {seq_idx}")
-            sequence = str(df['sequence'].iloc[seq_idx]).upper()
-        except Exception as e:
-            print(f"Error loading CSV: {e}")
-            sequence = input("Please enter sequence manually (A/T/G/C/U only): ").strip().upper().replace("U", "T")
-    else:
-        sequence = input("Enter DNA sequence (A/T/G/C/U only): ").strip().upper().replace("U", "T")
+    sequence = input("Enter DNA sequence (A/T/G/C/U only): ").strip().upper().replace("U", "T")
 
     # Validate sequence
     valid_bases = set('ATGCU')
@@ -441,8 +422,8 @@ def get_user_input():
     window_size = int(window_size) if window_size else 1
     step_size   = input("Sliding window step size [1]: ").strip()
     step_size = int(step_size) if step_size else 1
-    n_steps = input("Integrated gradients steps [30]: ").strip()
-    n_steps = int(n_steps) if n_steps else 30
+    n_steps = input("Integrated gradients steps [120]: ").strip()
+    n_steps = int(n_steps) if n_steps else 120
 
     return model_path, sequence, output_dir, window_size, step_size, n_steps
 

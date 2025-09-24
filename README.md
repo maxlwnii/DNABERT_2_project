@@ -60,7 +60,6 @@ conda activate dnabert2-project
     Integrated gradients steps [120]:
     ```
     The resulting plots will be saved as a png file in the specified outut directory.
-
-    ```markdown
+    
     ![Visualization example](images/vis.png)
     ```

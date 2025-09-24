@@ -402,9 +402,9 @@ class SaliencyAnalyzer:
 
 def get_user_input():
     print("=== DNA Sequence Saliency Analysis Tool ===")
-    model_path = input("Enter the path to your trained model directory [output/dnabert2/checkpoint-800]: ").strip()
+    model_path = input("Enter the path to your trained model directory [output/dnabert2/checkpoint-1000]: ").strip()
     if not model_path:
-        model_path = "output/dnabert2/checkpoint-800"
+        model_path = "output/dnabert2/checkpoint-1000"
 
     print("\nChoose sequence input method:")
     print("Enter sequence manually")

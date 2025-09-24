@@ -3,16 +3,15 @@ import csv
 import copy
 import json
 import logging
+import sys
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict, Sequence, Tuple, List, Union
-
+from transformers.models.bert.configuration_bert import BertConfig
 import torch
 import transformers
 import sklearn
 import numpy as np
 from torch.utils.data import Dataset
-
-from transformers import AutoModelForSequnceclassification, BertConfig
 
 from peft import (
     LoraConfig,
@@ -39,22 +38,24 @@ class DataArguments:
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
+    do_eval: bool = field(default=True, metadata={"help": "Enable evaluation."})
     cache_dir: Optional[str] = field(default=None)
     run_name: str = field(default="run")
     optim: str = field(default="adamw_torch")
     model_max_length: int = field(default=512, metadata={"help": "Maximum sequence length."})
-    gradient_accumulation_steps: int = field(default=8)
-    per_device_train_batch_size: int = field(default=32)
-    per_device_eval_batch_size: int = field(default=32) #  BERT models typically perform better with larger effective batch sizes
+    gradient_accumulation_steps: int = field(default=1)
+    per_device_train_batch_size: int = field(default=1)
+    per_device_eval_batch_size: int = field(default=1)
     num_train_epochs: int = field(default=1)
     fp16: bool = field(default=False)
     logging_steps: int = field(default=100)
     save_steps: int = field(default=100)
     eval_steps: int = field(default=100)
     evaluation_strategy: str = field(default="steps")
+    save_strategy: str = field(default="steps")
     warmup_steps: int = field(default=50)
     weight_decay: float = field(default=0.01)
-    learning_rate: float = field(default=5e-5) # 1e-4 for sequence classification
+    learning_rate: float = field(default=1e-4)
     save_total_limit: int = field(default=3)
     load_best_model_at_end: bool = field(default=True)
     output_dir: str = field(default="output")
@@ -64,9 +65,6 @@ class TrainingArguments(transformers.TrainingArguments):
     eval_and_save_results: bool = field(default=True)
     save_model: bool = field(default=False)
     seed: int = field(default=42)
-    # MLM support
-    objective: str = field(default="seqcls")  # "seqcls" or "mlm"
-    mlm_probability: float = field(default=0.15)
     
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str):
@@ -169,6 +167,7 @@ class SupervisedDataset(Dataset):
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         return dict(input_ids=self.input_ids[i], labels=self.labels[i])
 
+
 @dataclass
 class DataCollatorForSupervisedDataset(object):
     """Collate examples for supervised fine-tuning."""
@@ -230,37 +229,13 @@ def compute_metrics(eval_pred):
     return calculate_metric_with_sklearn(predictions, labels)
 
 
-"""
-MLM-specific metric computation - handles masked tokens properly
-"""
-def compute_metrics_mlm(eval_pred):
-    predictions, labels = eval_pred
-    # Only compute accuracy on masked tokens (labels != -100)
-    mask = labels != -100
-    if mask.sum() == 0:
-        return {"accuracy": 0.0}
-    
-    predictions = predictions[mask]
-    labels = labels[mask]
-    accuracy = np.mean(predictions == labels)
-    
-    return {
-        "accuracy": float(accuracy),
-        "masked_token_accuracy": float(accuracy),
-    }
-
-
-def preprocess_logits_for_metrics_mlm(logits, labels):
-    """MLM-specific logits preprocessing"""
-    if isinstance(logits, tuple):
-        logits = logits[0]
-    return torch.argmax(logits, dim=-1)
-
 
 def train():
+
+    print(sys.argv)
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-
+    # load tokenizer
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -269,10 +244,10 @@ def train():
         use_fast=True,
         trust_remote_code=True,
     )
+
     if "InstaDeepAI" in model_args.model_name_or_path:
         tokenizer.eos_token = tokenizer.pad_token
 
-    # Classification path - unchanged
     # define datasets and data collator
     train_dataset = SupervisedDataset(tokenizer=tokenizer, 
                                       data_path=os.path.join(data_args.data_path, "train.csv"), 
@@ -333,5 +308,7 @@ def train():
             json.dump(results, f)
 
 
-if __name__ == "__main__":
+
+
+if __name__ == "__main__":    
     train()

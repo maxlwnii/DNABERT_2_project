@@ -16,6 +16,9 @@ python train.py \
     --num_train_epochs 5 \
     --fp16 \
     --save_steps 200 \
+    --eval_steps 200 \
     --output_dir output/dnabert2 \
-    --evaluation_strategy steps \
-    --logging_dir ./logs_experiment_1
+    --warmup_steps 50 \
+    --logging_steps 100 \
+    --overwrite_output_dir \
+    --log_level info

@@ -1,4 +1,4 @@
-name: dnabert2-project
+name: dnabert2
 channels:
   - pytorch
   - nvidia

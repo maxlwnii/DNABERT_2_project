@@ -6,14 +6,14 @@ It contains a small dataset of PUM2 sequences.
 # Setup
 ```bash
 conda env create -f environment.yml
-conda activate dnabert2-project
+conda activate dnabert2
 ```
 ## Running the Script.
 
 1.  **Convert the FASTA data to CSV:**
     This will create `train.csv`, `test.csv`, and `dev.csv` in the `data` directory.
     ```bash
-    python convert_fasta_to_csv.py
+    python3 convert_fasta_to_csv.py
     ```
     This will create the required csv files for finetuning.The files are in the format described in the DNABERT2 paper: with a sequence and its corresponding label.
 
@@ -45,7 +45,16 @@ conda activate dnabert2-project
         --overwrite_output_dir \
         --log_level info
     ```
+
+    Or just run:
+    ```bash
+    bash finetune.sh
+    ```
     (Uninstalling triton helped resolve type errors.)
+    
+    ```bash
+    pip uninstall -y triton
+    ```
 
 3. **Visualisation** 
     After finetuning, the model will be saved in the output/dnabert2/checkpoint-X directory.

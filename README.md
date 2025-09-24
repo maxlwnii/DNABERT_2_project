@@ -15,7 +15,7 @@ conda activate dnabert2-project
     ```bash
     python convert_fasta_to_csv.py
     ```
-    This will create train.csv, test.csv and dev.csv with the the sequence and the corresponding label.
+    This will create the required csv files for finetuning.The files are in the format described in the DNABERT2 paper: with a sequence and its corresponding label.
 
 2.  **Run the finetuning script:**
  

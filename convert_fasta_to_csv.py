@@ -67,9 +67,12 @@ def create_csv_files():
     print(f"Dev set: {len(dev_df)} sequences")
     print(f"Test set: {len(test_df)} sequences")
 
-    train_df.to_csv('train.csv', index=False)
-    dev_df.to_csv('dev.csv', index=False)
-    test_df.to_csv('test.csv', index=False)
+    output_dir = 'data'
+    os.makedirs(output_dir, exist_ok=True)
+
+    train_df.to_csv(os.path.join(output_dir, 'train.csv'), index=False)
+    dev_df.to_csv(os.path.join(output_dir, 'dev.csv'), index=False)
+    test_df.to_csv(os.path.join(output_dir, 'test.csv'), index=False)
 
     print("\nSample from train.csv:")
     print(train_df.head())
